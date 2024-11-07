@@ -98,6 +98,7 @@
 
 ## 🌐 Architecture
 
+![Architecture drawio](https://github.com/user-attachments/assets/202c22cb-6c2f-4d89-a773-04155a7a7db8)
 
 
 <br>
