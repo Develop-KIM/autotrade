@@ -1,9 +1,7 @@
 import pandas as pd
 from pykrx import stock
 from sklearn.ensemble import RandomForestRegressor
-# from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-# from datetime import datetime
 
 # 삼성전자 주식 데이터 불러오기
 start_date = '2023-01-01'
@@ -42,15 +40,15 @@ y_pred = model.predict(X_test)
 # 결과 시각화
 plt.figure(figsize=(12, 6))
 plt.plot(
-    y_test.index, y_test, label='Actual High Price',
+    y_test.index, y_test, label='실제 최고가',
     color='blue'
 )
 plt.plot(
-    y_test.index, y_pred, label='Predicted High Price',
+    y_test.index, y_pred, label='예상되는 높은 가격',
     color='red', linestyle='--'
 )
 plt.xlabel('Date')
 plt.ylabel('High Price')
-plt.title('Actual vs Predicted High Price for Samsung Electronics')
+plt.title('삼성전자의 실제 고가 vs 예상 고가')
 plt.legend()
 plt.show()
