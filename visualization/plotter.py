@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+
 def plot_returns(result):
     """일별 수익률을 시각화합니다."""
     plt.figure(figsize=(14, 7))
