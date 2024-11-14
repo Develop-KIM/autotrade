@@ -29,7 +29,7 @@ class MyWindow(QMainWindow, form_class):
         self.trade_timer.timeout.connect(self.trade_stocks)
 
     def start_trading(self):
-        self.timer.start(1000)  # 1초마다 check_market_time 호출
+        self.timer.start(1000)  # 1초마다 check_market_time 호출    
         self.trade_timer.start(1000 * 60)  # 1분마다 trade_stocks 호출
 
     def stop_trading(self):
