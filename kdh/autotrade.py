@@ -102,7 +102,12 @@ class MyWindow(QMainWindow, form_class):
             for idx, code in enumerate(stocks_info['종목번호']):
                 # 종목번호 앞에 붙는 'A' 제거
                 code = code.strip()[1:]
-                quantity = int(stocks_info['보유수량'][idx])
+                quantity_str = stocks_info['보유수량'][idx].strip()
+                
+                if not quantity_str.isdigit():
+                    continue
+                    
+                quantity = int(quantity_str)
                 if quantity > 0:
                     order_type = 2  # 매도 주문
                     order_result = self.kiwoom.SendOrder("매도주문", "0101", account_number, order_type, code, quantity, 0, "03", "")
