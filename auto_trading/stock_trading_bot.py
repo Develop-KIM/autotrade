@@ -9,9 +9,9 @@ from pykiwoom.kiwoom import Kiwoom
 from pykrx import stock
 import datetime
 
-form_class = uic.loadUiType(r'gui.ui')[0]
+ui_file_path = os.path.join(os.path.dirname(__file__), 'gui.ui')
 
-class MyWindow(QMainWindow, form_class):
+class MyWindow(QMainWindow, ui_file_path):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -85,7 +85,7 @@ class MyWindow(QMainWindow, form_class):
         order_type = 1
         order_result = self.kiwoom.SendOrder("매수주문", "0101", account_number, order_type, code, quantity, price, "00", "")
         if order_result == 0:
-            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quantity}]"
+            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quaㅌntity}]"
             self.send_slack_message(message)
             self.buysell_log.append(message)
             return True
