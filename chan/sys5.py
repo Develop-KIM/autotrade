@@ -9,6 +9,7 @@ import datetime
 # Qt Designer로 생성한 gui 파일 로드
 form_class = uic.loadUiType(r'gui.ui')[0]
 
+
 class MyWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
