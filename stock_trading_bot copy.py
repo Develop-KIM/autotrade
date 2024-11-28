@@ -42,7 +42,7 @@ class MyWindow(QMainWindow, form_class):
 
     def start_trading(self):
         self.timer.start(1000 * 60)  # 1분마다 시장 시간 체크
-        self.trade_timer.start(1000 * 30)  # 30초마다 거래 시도 (기존 17초에서 증가)
+        self.trade_timer.start(1000 * 17)  # 17초마다 거래 시도
         today = datetime.datetime.now().strftime('%Y%m%d')
         self.bought_list = {code: today for code, buy_date in self.bought_list.items() if buy_date == today}
 
@@ -59,48 +59,38 @@ class MyWindow(QMainWindow, form_class):
 
     def trade_stocks(self):
         """주식 거래 로직을 실행하는 함수"""
-        try:
-            # 세션이 유지되고 있는지 확인하고, 필요하면 재로그인
-            if not self.kiwoom.GetConnectState():
-                self.kiwoom.CommConnect(block=True)
-                self.textboard.append("세션이 만료되어 재로그인하였습니다.")
+        yesterday = stock.get_nearest_business_day_in_a_week(datetime.datetime.now().strftime('%Y%m%d'))
+        today = datetime.datetime.now().strftime('%Y%m%d')
+        codes = self.code_list.text().split(',')
+        k_value = float(self.k_value.text())
 
-            yesterday = stock.get_nearest_business_day_in_a_week(datetime.datetime.now().strftime('%Y%m%d'))
-            today = datetime.datetime.now().strftime('%Y%m%d')
-            codes = self.code_list.text().split(',')
-            k_value = float(self.k_value.text())
+        for code in codes:
+            if code.strip() and (code.strip() not in self.bought_list or self.bought_list[code.strip()] != today):
+                try:
+                    current_price_raw = self.kiwoom.block_request("opt10001",
+                                                                  종목코드=code.strip(),
+                                                                  output="주식기본정보",
+                                                                  next=0)['현재가'][0].replace(",", "")
+                    current_price = abs(int(current_price_raw))
+                    name = self.kiwoom.block_request("opt10001",
+                                                     종목코드=code.strip(),
+                                                     output="주식기본정보",
+                                                     next=0)['종목명'][0]
+                    self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] [{name}] [현재가: {current_price}]")
 
-            for code in codes:
-                if code.strip() and (code.strip() not in self.bought_list or self.bought_list[code.strip()] != today):
-                    try:
-                        current_price_raw = self.kiwoom.block_request("opt10001",
-                                                                      종목코드=code.strip(),
-                                                                      output="주식기본정보",
-                                                                      next=0)['현재가'][0].replace(",", "")
-                        current_price = abs(int(current_price_raw))
-                        name = self.kiwoom.block_request("opt10001",
-                                                         종목코드=code.strip(),
-                                                         output="주식기본정보",
-                                                         next=0)['종목명'][0]
-                        self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] [{name}] [현재가: {current_price}]")
+                    yesterday_data = stock.get_market_ohlcv_by_date(yesterday, yesterday, code.strip())
+                    if not yesterday_data.empty:
+                        high = yesterday_data['고가'][0]
+                        low = yesterday_data['저가'][0]
+                        close = yesterday_data['종가'][0]
+                        target_price = close + (high - low) * k_value
 
-                        yesterday_data = stock.get_market_ohlcv_by_date(yesterday, yesterday, code.strip())
-                        if not yesterday_data.empty:
-                            high = yesterday_data['고가'][0]
-                            low = yesterday_data['저가'][0]
-                            close = yesterday_data['종가'][0]
-                            target_price = close + (high - low) * k_value
-
-                            if current_price > target_price:
-                                if self.buy_stock(code.strip(), current_price, 1):
-                                    self.bought_list[code.strip()] = today
-                    except KeyError as e:
-                        self.textboard.append(f"데이터 누락 오류: {str(e)}")
-                    except Exception as e:
-                        self.textboard.append(f"오류 발생: {str(e)}")
-                        continue
-        except Exception as e:
-            self.textboard.append(f"거래 로직 실행 중 오류: {str(e)}")
+                        if current_price > target_price:
+                            if self.buy_stock(code.strip(), current_price, 1):
+                                self.bought_list[code.strip()] = today
+                except Exception as e:
+                    self.textboard.append(f"오류 발생: {str(e)}")
+                    continue
 
     def buy_stock(self, code, price, quantity):
         account_number = self.kiwoom.GetLoginInfo("ACCNO")[0]
