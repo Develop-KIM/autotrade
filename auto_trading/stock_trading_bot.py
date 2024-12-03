@@ -87,7 +87,7 @@ class MyWindow(QMainWindow, ui_file_path):
         order_type = 1
         order_result = self.kiwoom.SendOrder("매수주문", "0101", account_number, order_type, code, quantity, price, "00", "")
         if order_result == 0:
-            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quaㅌntity}]"
+            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quantity}]"
             self.send_slack_message(message)
             self.buysell_log.append(message)
             return True
