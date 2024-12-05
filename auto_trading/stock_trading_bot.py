@@ -41,6 +41,17 @@ class MyWindow(QMainWindow, form_class):
         self.bought_list = {}
 
     def start_trading(self):
+        server_gubun = self.kiwoom.GetLoginInfo("GetServerGubun")
+        if server_gubun == "1":
+            print("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
+            self.textboard.append("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
+        elif server_gubun == "0":
+            print("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
+            self.textboard.append("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
+        else:
+            print("[ERROR] 서버 정보를 가져올 수 없습니다!")
+            self.textboard.append("[ERROR] 서버 정보를 가져올 수 없습니다!")
+            return
         self.timer.start(1000 * 60)  # 1분마다 시장 시간 체크
         self.trade_timer.start(1000 * 30)  # 30초마다 거래 시도 (기존 17초에서 증가)
         today = datetime.datetime.now().strftime('%Y%m%d')
@@ -73,10 +84,10 @@ class MyWindow(QMainWindow, form_class):
             for code in codes:
                 if code.strip() and (code.strip() not in self.bought_list or self.bought_list[code.strip()] != today):
                     try:
-                        current_price_raw = self.kiwoom.block_request("opt10001",
-                                                                      종목코드=code.strip(),
-                                                                      output="주식기본정보",
-                                                                      next=0)['현재가'][0].replace(",", "")
+                        current_price_raw = self.kiwoom.block_request("opt10001", 종목코드=code.strip(), output="주식기본정보", next=0)['현재가'][0].replace(",", "")
+                        if current_price_raw == '':
+                            self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] 현재가 데이터를 가져올 수 없습니다.")
+                            continue
                         current_price = abs(int(current_price_raw))
                         name = self.kiwoom.block_request("opt10001",
                                                          종목코드=code.strip(),
@@ -106,6 +117,7 @@ class MyWindow(QMainWindow, form_class):
         account_number = self.kiwoom.GetLoginInfo("ACCNO")[0]
         order_type = 1
         order_result = self.kiwoom.SendOrder("매수주문", "0101", account_number, order_type, code, quantity, price, "00", "")
+        print(order_result)
         if order_result == 0:
             message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quantity}]"
             self.send_slack_message(message)
@@ -132,6 +144,9 @@ class MyWindow(QMainWindow, form_class):
             for idx, code in enumerate(stocks_info['종목번호']):
                 code = code.strip()[1:]
                 quantity_str = stocks_info['보유수량'][idx].strip()
+                if quantity_str == '':
+                    self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] 보유 수량 데이터를 가져올 수 없습니다.")
+                    continue
 
                 quantity = int(quantity_str) if quantity_str.isdigit() else 0
                 if quantity > 0:
@@ -149,7 +164,7 @@ class MyWindow(QMainWindow, form_class):
             self.buysell_log.append(message)
 
     def send_slack_message(self, message):
-        webhook_url = "https://hooks.slack.com/services/your-slack-webhook-url"
+        webhook_url = "https://hooks.slack.com/services/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"
         headers = {'Content-type': 'application/json'}
         payload = {"text": message}
         try:
