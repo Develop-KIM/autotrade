@@ -29,8 +29,28 @@ class MyWindow(QMainWindow, ui_file_path):
         self.bought_list = {}
 
     def start_trading(self):
+    # 키움 OpenAPI 연결 상태 확인
+        if self.kiwoom.GetConnectState() != 1:
+            print("[ERROR] 키움 OpenAPI 연결 실패!")
+            self.textboard.append("[ERROR] 키움 OpenAPI 연결 실패!")
+            return
+        
+        # 서버 환경 확인
+        server_gubun = self.kiwoom.GetLoginInfo("GetServerGubun")
+        if server_gubun == "1":
+            print("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
+            self.textboard.append("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
+        elif server_gubun == "0":
+            print("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
+            self.textboard.append("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
+        else:
+            print("[ERROR] 서버 정보를 가져올 수 없습니다!")
+            self.textboard.append("[ERROR] 서버 정보를 가져올 수 없습니다!")
+            return
+
+        # 자동매매 시작
         self.timer.start(1000 * 60)
-        self.trade_timer.start(1000 * 17)
+        self.trade_timer.start(1000 * 20)
         today = datetime.datetime.now().strftime('%Y%m%d')
         self.bought_list = {code: today for code, buy_date in self.bought_list.items() if buy_date == today}
 
