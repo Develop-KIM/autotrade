@@ -2,16 +2,14 @@ import sys
 import os
 import requests
 import time
-import os
 import pandas as pd
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QTimer, QTime
-from PyQt5.uic import loadUi
-from pykiwoom.kiwoom import Kiwoom
-from pykrx import stock
+from pykiwoom.kiwoom import Kiwoom  # pykiwoom 라이브러리 유지
 import datetime
 import openai  # ChatGPT API 사용
+from bs4 import BeautifulSoup
 from pykrx import stock
 
 # OpenAI API 키 설정
@@ -23,7 +21,7 @@ ui_file_path = os.path.join(os.path.dirname(__file__), 'gui.ui')
 form_class = uic.loadUiType(ui_file_path)[0]
 
 
-class MyWindow(QMainWindow, ui_file_path):
+class MyWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -44,26 +42,8 @@ class MyWindow(QMainWindow, ui_file_path):
         self.bought_list = {}
 
     def start_trading(self):
-    # 키움 OpenAPI 연결 상태 확인
-        if self.kiwoom.GetConnectState() != 1:
-            print("[ERROR] 키움 OpenAPI 연결 실패!")
-            self.textboard.append("[ERROR] 키움 OpenAPI 연결 실패!")
-            return
-        
-        # 서버 환경 확인
-        server_gubun = self.kiwoom.GetLoginInfo("GetServerGubun")
-        if server_gubun == "1":
-            print("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
-            self.textboard.append("[INFO] 현재 모의투자 서버에 연결되어 있습니다.")
-        elif server_gubun == "0":
-            print("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
-            self.textboard.append("[INFO] 현재 실거래 서버에 연결되어 있습니다.")
-        else:
-            print("[ERROR] 서버 정보를 가져올 수 없습니다!")
-            self.textboard.append("[ERROR] 서버 정보를 가져올 수 없습니다!")
-            return
-        self.timer.start(1000 * 60)  # 1분마다 시장 시간 체크
-        self.trade_timer.start(1000 * 30)  # 30초마다 거래 시도 (기존 17초에서 증가)
+        self.timer.start(1000 * 60)
+        self.trade_timer.start(1000 * 17)
         today = datetime.datetime.now().strftime('%Y%m%d')
         self.bought_list = {code: today for code, buy_date in self.bought_list.items() if buy_date == today}
 
@@ -72,64 +52,53 @@ class MyWindow(QMainWindow, ui_file_path):
         self.trade_timer.stop()
 
     def check_market_time(self):
-        """시장 시간을 확인하고 마감 시간이 되면 모든 주식을 매도합니다."""
         now = QTime.currentTime()
         if now.toString("HHmm") >= "1500":
             self.stop_trading()
             self.sell_all_stocks()
 
     def trade_stocks(self):
-        """주식 거래 로직을 실행하는 함수"""
-        try:
-            # 세션이 유지되고 있는지 확인하고, 필요하면 재로그인
-            if not self.kiwoom.GetConnectState():
-                self.kiwoom.CommConnect(block=True)
-                self.textboard.append("세션이 만료되어 재로그인하였습니다.")
+        yesterday = stock.get_nearest_business_day_in_a_week(datetime.datetime.now().strftime('%Y%m%d'))
+        today = datetime.datetime.now().strftime('%Y%m%d')
+        codes = self.code_list.text().split(',')
+        k_value = float(self.k_value.text())
 
-            yesterday = stock.get_nearest_business_day_in_a_week(datetime.datetime.now().strftime('%Y%m%d'))
-            today = datetime.datetime.now().strftime('%Y%m%d')
-            codes = self.code_list.text().split(',')
-            k_value = float(self.k_value.text())
+        for code in codes:
+            if code.strip() and (code.strip() not in self.bought_list or self.bought_list[code.strip()] != today):
+                current_price_raw = self.kiwoom.block_request("opt10001",
+                                                              종목코드=code.strip(),
+                                                              output="주식기본정보",
+                                                              next=0)['현재가'][0].replace(",", "")
+                try:
+                    current_price = int(current_price_raw)
+                    if current_price < 0:
+                        current_price = abs(current_price)
+                        
+                    name = self.kiwoom.block_request("opt10001",
+                                                    종목코드=code.strip(),
+                                                    output="주식기본정보",
+                                                    next=0)['종목명'][0]
+                    self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] [{name}] [현재가: {current_price}]")
 
-            for code in codes:
-                if code.strip() and (code.strip() not in self.bought_list or self.bought_list[code.strip()] != today):
-                    try:
-                        current_price_raw = self.kiwoom.block_request("opt10001", 종목코드=code.strip(), output="주식기본정보", next=0)['현재가'][0].replace(",", "")
-                        if current_price_raw == '':
-                            self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] 현재가 데이터를 가져올 수 없습니다.")
-                            continue
-                        current_price = abs(int(current_price_raw))
-                        name = self.kiwoom.block_request("opt10001",
-                                                         종목코드=code.strip(),
-                                                         output="주식기본정보",
-                                                         next=0)['종목명'][0]
-                        self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] [{name}] [현재가: {current_price}]")
-
-                        yesterday_data = stock.get_market_ohlcv_by_date(yesterday, yesterday, code.strip())
-                        if not yesterday_data.empty:
-                            high = yesterday_data['고가'][0]
-                            low = yesterday_data['저가'][0]
-                            close = yesterday_data['종가'][0]
-                            target_price = close + (high - low) * k_value
-
-                            if current_price > target_price:
-                                if self.buy_stock(code.strip(), current_price, 1):
-                                    self.bought_list[code.strip()] = today
-                    except KeyError as e:
-                        self.textboard.append(f"데이터 누락 오류: {str(e)}")
-                    except Exception as e:
-                        self.textboard.append(f"오류 발생: {str(e)}")
-                        continue
-        except Exception as e:
-            self.textboard.append(f"거래 로직 실행 중 오류: {str(e)}")
+                    yesterday_data = stock.get_market_ohlcv_by_date(yesterday, yesterday, code.strip())
+                    if not yesterday_data.empty:
+                        high = yesterday_data['고가'][0]
+                        low = yesterday_data['저가'][0]
+                        close = yesterday_data['종가'][0]
+                        target_price = close + (high - low) * k_value
+                        
+                        if current_price > target_price:
+                            if self.buy_stock(code.strip(), current_price, 1):
+                                self.bought_list[code.strip()] = today
+                except:
+                    continue
 
     def buy_stock(self, code, price, quantity):
         account_number = self.kiwoom.GetLoginInfo("ACCNO")[0]
         order_type = 1
         order_result = self.kiwoom.SendOrder("매수주문", "0101", account_number, order_type, code, quantity, price, "00", "")
-        print(order_result)
         if order_result == 0:
-            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quantity}]"
+            message = f"매수 주문 성공: [{code}] [가격: {price}] [수량: {quaㅌntity}]"
             self.send_slack_message(message)
             self.buysell_log.append(message)
             return True
@@ -154,27 +123,60 @@ class MyWindow(QMainWindow, ui_file_path):
             for idx, code in enumerate(stocks_info['종목번호']):
                 code = code.strip()[1:]
                 quantity_str = stocks_info['보유수량'][idx].strip()
-                if quantity_str == '':
-                    self.textboard.append(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [{code}] 보유 수량 데이터를 가져올 수 없습니다.")
-                    continue
-
-                quantity = int(quantity_str) if quantity_str.isdigit() else 0
+                
+                if not quantity_str.isdigit():
+                    quantity_str = 0
+                    
+                quantity = int(quantity_str)
                 if quantity > 0:
                     order_type = 2
                     order_result = self.kiwoom.SendOrder("매도주문", "0101", account_number, order_type, code, quantity, 0, "03", "")
                     if order_result == 0:
                         message = f"매도 주문 성공: [{code}] [수량: {quantity}]"
+                        self.send_slack_message(message)
+                        self.buysell_log.append(message)
                     else:
                         message = f"매도 주문 실패: [{code}]"
+                        self.send_slack_message(message)
+                        self.buysell_log.append(message)
+                
+                elif quantity == 0:
+                    message = "매도 주문 실패: 보유한 주식 없음"
                     self.send_slack_message(message)
                     self.buysell_log.append(message)
+        
         else:
             message = "매도 주문 실패: 보유 주식 데이터 확인 불가"
             self.send_slack_message(message)
             self.buysell_log.append(message)
 
+        start_date = pd.Timestamp.today() - pd.Timedelta(days=14)
+        dates = pd.date_range(start=start_date, periods=15)
+        all_trades = pd.DataFrame()
+
+        for date in dates:
+            formatted_date = date.strftime("%Y%m%d")
+            data = self.kiwoom.block_request("opt10170",
+                                            계좌번호=account_number,
+                                            비밀번호="",
+                                            기준일자=formatted_date,
+                                            단주구분='1',
+                                            현금신용구분='0',
+                                            output="주식일봉차트조회",
+                                            next=0)
+
+            df = pd.DataFrame(data)
+            df['기준날짜'] = formatted_date
+            all_trades = pd.concat([all_trades, df], ignore_index=True)
+            time.sleep(0.5)
+
+        all_trades.to_csv("매매일지.csv", index=False, encoding='utf-8-sig')
+        message = "매매일지 csv 파일 저장 완료"
+        self.send_slack_message(message)
+        self.buysell_log.append(message)
+
     def send_slack_message(self, message):
-        webhook_url = "https://hooks.slack.com/services/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"
+        webhook_url = "https://hooks.slack.com/services/your-slack-webhook-url"
         headers = {'Content-type': 'application/json'}
         payload = {"text": message}
         try:
@@ -228,6 +230,7 @@ class MyWindow(QMainWindow, ui_file_path):
                                                           output="가격급등락요청",
                                                           next=0)
             time.sleep(0.5)  # API 호출 간 대기 시간 추가
+
 
             # 예상 체결 등락률 상위 종목 가져오기
             expected_price_change = self.kiwoom.block_request("opt10029",
@@ -290,7 +293,7 @@ class MyWindow(QMainWindow, ui_file_path):
 
             # ChatGPT API 호출
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": "당신은 한국 주식시장을 분석하여 투자하기 좋은 종목을 추천하는 전문가입니다."},
                     {"role": "user", "content": prompt}
