@@ -44,3 +44,4 @@ MANIFEST
 
 # Environment variables file
 .env
+.DS_Store
