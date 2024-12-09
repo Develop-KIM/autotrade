@@ -50,7 +50,7 @@ def init_db():
             decision VARCHAR(10),
             percentage INT,
             reason TEXT,
-            btc_balance INT,
+            btc_balance DECIMAL(20, 8),
             krw_balance INT,
             btc_avg_buy_price INT,
             btc_krw_price INT,
@@ -478,13 +478,10 @@ def ai_trading():
 
     log_trade(connection, result.decision, result.percentage if order_executed else 0, result.reason, btc_balance, krw_balance, btc_avg_buy_price, current_btc_price, reflection)
 
-ai_trading()
-
-# # Main loop
-# while True:
-#     try:
-#         ai_trading()
-#         time.sleep(3600 * 4)  # 4시간마다 실행
-#     except Exception as e:
-#         logger.error(f"An error occurred: {e}")
-#         time.sleep(300)  # 오류 발생 시 5분 후 재시도
+while True:
+    try:
+        ai_trading()
+        time.sleep(600)
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        time.sleep(300)

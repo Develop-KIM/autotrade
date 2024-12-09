@@ -9,3 +9,5 @@ webdriver_manager
 Pillow
 youtube-transcript-api 
 mysql-connector-python
+streamlit
+plotly
