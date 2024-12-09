@@ -8,6 +8,7 @@ import requests
 import base64
 import io
 import logging
+import mysql.connector
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -24,16 +25,76 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
 from datetime import datetime
 from youtube_transcript_api import YouTubeTranscriptApi
+from mysql.connector import Error
 
 class TradingDecision(BaseModel):
     decision: str
     percentage: int
     reason: str
 
+def init_db():
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv("MYSQL_HOST"),
+            user=os.getenv("MYSQL_USER"),
+            port=int(os.getenv("MYSQL_PORT")),
+            password=os.getenv("MYSQL_PASSWORD"),
+            database=os.getenv("MYSQL_DATABASE")
+        )
+        
+        cursor = connection.cursor()
+        
+        cursor.execute('''CREATE TABLE IF NOT EXISTS trades (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            timestamp DATETIME,
+            decision VARCHAR(10),
+            percentage INT,
+            reason TEXT,
+            btc_balance DECIMAL(20, 8),
+            krw_balance DECIMAL(20, 2),
+            btc_avg_buy_price DECIMAL(20, 2),
+            btc_krw_price DECIMAL(20, 2)
+        )''')
+        
+        connection.commit()
+        return connection
+    except Error as e:
+        logger.error(f"Error initializing MySQL database: {e}")
+        raise
+
+def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price):
+    try:
+        cursor = connection.cursor()
+        timestamp = datetime.now()
+        query = """INSERT INTO trades 
+                   (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+        values = (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
+        
+        cursor.execute(query, values)
+        connection.commit()
+    except Error as e:
+        logger.error(f"Error logging trade: {e}")
+
+def get_db_connection():
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv("MYSQL_HOST"),
+            user=os.getenv("MYSQL_USER"),
+            port=int(os.getenv("MYSQL_PORT")),
+            password=os.getenv("MYSQL_PASSWORD"),
+            database=os.getenv("MYSQL_DATABASE")
+        )
+        return connection
+    except Error as e:
+        logger.error(f"Error connecting to MySQL database: {e}")
+        raise
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+init_db()
 
 def add_indicators(df):
     indicator_bb = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
@@ -207,6 +268,8 @@ def ai_trading():
 
     youtube_transcript = get_combined_transcript("YOUTUBE_TRANSCRIPT")
 
+    connection = get_db_connection()
+
     driver = None
     try:
         driver = create_driver()
@@ -303,14 +366,20 @@ def ai_trading():
     result = TradingDecision.model_validate_json(response.choices[0].message.content)
 
     print(f"### AI Decision: {result.decision.upper()} ###")
+
     print(f"### Reason: {result.reason} ###")
+
+    order_executed = False
 
     if result.decision == "buy":
         my_krw = upbit.get_balance("KRW")
         buy_amount = my_krw * (result.percentage / 100) * 0.9995
         if my_krw*0.9995 > 5000:
             print(f"### Buy Order Executed: {result.percentage}% of available KRW ###")
-            print(upbit.buy_market_order("KRW-BTC", buy_amount))
+            order = upbit.buy_market_order("KRW-BTC", buy_amount)
+            if order:
+                order_executed = True
+            print(order)
         else:
             print("### Buy Order Failed: Insufficient KRW (less than 5000 KRW) ###")
     elif result.decision == "sell":
@@ -319,11 +388,33 @@ def ai_trading():
         current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
         if my_btc*current_price > 5000:
             print(f"### Sell Order Executed: {result.percentage}% of held BTC ###")
-            print(upbit.sell_market_order("KRW-BTC", sell_amount))
+            order = upbit.sell_market_order("KRW-BTC", sell_amount)
+            if order:
+                order_executed = True
+            print(order)
         else:
             print("### Sell Order Failed: Insufficient BTC (less than 5000 KRW worth) ###")
     elif result.decision == "hold":
         print("### Hold Position ###")
+
+    time.sleep(1)  # API 호출 제한을 고려하여 잠시 대기
+    balances = upbit.get_balances()
+    btc_balance = next((float(balance['balance']) for balance in balances if balance['currency'] == 'BTC'), 0)
+    krw_balance = next((float(balance['balance']) for balance in balances if balance['currency'] == 'KRW'), 0)
+    btc_avg_buy_price = next((float(balance['avg_buy_price']) for balance in balances if balance['currency'] == 'BTC'), 0)
+    current_btc_price = pyupbit.get_current_price("KRW-BTC")
+
+    # 7. 거래 정보 로깅
+    log_trade(
+        connection,
+        result.decision,
+        result.percentage if order_executed else 0,
+        result.reason,
+        btc_balance,
+        krw_balance,
+        btc_avg_buy_price,
+        current_btc_price,
+    )
 
 ai_trading()
 
