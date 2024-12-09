@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def setup_chrome_options():
     chrome_options = Options()
-    chrome_options.add_argument("--start-maximized")  # 브라우저를 최대화하여 시작
+    chrome_options.add_argument("--start-maximized")
     return chrome_options
 
 def create_driver():
@@ -24,9 +24,8 @@ def capture_full_page_screenshot(driver, url, filename):
     logger.info(f"{url} 로딩 중...")
     driver.get(url)
     
-    # 페이지 로딩을 위한 대기 시간
     logger.info("페이지 로딩 대기 중...")
-    time.sleep(10)  # 페이지 로딩을 위해 10초 대기
+    time.sleep(10) 
     
     logger.info("전체 페이지 스크린샷 촬영 중...")
     driver.save_screenshot(filename)
@@ -39,7 +38,7 @@ def main():
         capture_full_page_screenshot(
             driver, 
             "https://upbit.com/full_chart?code=CRIX.UPBIT.KRW-BTC",
-            "upbit_btc_full_chart.png"
+            "src/libraries/upbit_btc_full_chart.png"
         )
     except Exception as e:
         logger.error(f"오류 발생: {e}")
