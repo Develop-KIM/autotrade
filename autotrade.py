@@ -1,37 +1,51 @@
 import os
-import time
+from dotenv import load_dotenv
 import pyupbit
 import pandas as pd
 import json
-import ta
 from openai import OpenAI
-from dotenv import load_dotenv
+import ta
 from ta.utils import dropna
-
+import time
 
 load_dotenv()
 
+def add_indicators(df):
+    indicator_bb = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
+    df['bb_bbm'] = indicator_bb.bollinger_mavg()
+    df['bb_bbh'] = indicator_bb.bollinger_hband()
+    df['bb_bbl'] = indicator_bb.bollinger_lband()
+    
+    df['rsi'] = ta.momentum.RSIIndicator(close=df['close'], window=14).rsi()
+    
+    macd = ta.trend.MACD(close=df['close'])
+    df['macd'] = macd.macd()
+    df['macd_signal'] = macd.macd_signal()
+    df['macd_diff'] = macd.macd_diff()
+    
+    df['sma_20'] = ta.trend.SMAIndicator(close=df['close'], window=20).sma_indicator()
+    df['ema_12'] = ta.trend.EMAIndicator(close=df['close'], window=12).ema_indicator()
+    
+    return df
+
 def ai_trading():
-    # Upbit 객체 생성
     access = os.getenv("UPBIT_ACCESS_KEY")
     secret = os.getenv("UPBIT_SECRET_KEY")
     upbit = pyupbit.Upbit(access, secret)
 
-    # 1. 현재 투자 상태 조회
     all_balances = upbit.get_balances()
     filtered_balances = [balance for balance in all_balances if balance['currency'] in ['BTC', 'KRW']]
     
-    # 2. 오더북(호가 데이터) 조회
     orderbook = pyupbit.get_orderbook("KRW-BTC")
-    
-    # 3. 차트 데이터 조회 및 보조지표 추가
-    # 30일 일봉 데이터
-    df_daily = pyupbit.get_ohlcv("KRW-BTC", interval="day", count=30)
-    
-    # 24시간 시간봉 데이터
-    df_hourly = pyupbit.get_ohlcv("KRW-BTC", interval="minute60", count=24)
 
-    # AI에게 데이터 제공하고 판단 받기
+    df_daily = pyupbit.get_ohlcv("KRW-BTC", interval="day", count=30)
+    df_daily = dropna(df_daily)
+    df_daily = add_indicators(df_daily)
+    
+    df_hourly = pyupbit.get_ohlcv("KRW-BTC", interval="minute60", count=24)
+    df_hourly = dropna(df_hourly)
+    df_hourly = add_indicators(df_hourly)
+
     client = OpenAI()
 
     response = client.chat.completions.create(
@@ -63,7 +77,6 @@ def ai_trading():
     )
     result = response.choices[0].message.content
 
-    # AI의 판단에 따라 실제로 자동매매 진행하기
     result = json.loads(result)
 
     print("### AI Decision: ", result["decision"].upper(), "###")
@@ -87,6 +100,11 @@ def ai_trading():
     elif result["decision"] == "hold":
         print("### Hold Position ###")
 
+# Main loop
 while True:
-	time.sleep(10)
-	ai_trading()
+    try:
+        ai_trading()
+        time.sleep(600)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        time.sleep(60)
