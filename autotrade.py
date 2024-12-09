@@ -1,12 +1,8 @@
 import os
 from dotenv import load_dotenv
 import pyupbit
-import pandas as pd
 import json
 from openai import OpenAI
-import ta
-from ta.utils import dropna
-import time
 
 load_dotenv()
 
@@ -18,10 +14,12 @@ def ai_trading():
 
     # 1. 현재 투자 상태 조회
     all_balances = upbit.get_balances()
+    print(all_balances)
     filtered_balances = [balance for balance in all_balances if balance['currency'] in ['BTC', 'KRW']]
     
     # 2. 오더북(호가 데이터) 조회
     orderbook = pyupbit.get_orderbook("KRW-BTC")
+    print(orderbook)
     
     # 3. 차트 데이터 조회 및 보조지표 추가
     # 30일 일봉 데이터
@@ -89,4 +87,4 @@ def ai_trading():
 while True:
 		import time
 	  time.sleep(10)
-	  ai_trading()
+ai_trading()
