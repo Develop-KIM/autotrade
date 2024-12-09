@@ -11,6 +11,7 @@ import logging
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from pydantic import BaseModel
 from PIL import Image
 from ta.utils import dropna
 from selenium import webdriver
@@ -23,6 +24,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
 from datetime import datetime
 from youtube_transcript_api import YouTubeTranscriptApi
+
+class TradingDecision(BaseModel):
+    decision: str
+    reason: str
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -225,50 +230,63 @@ def ai_trading():
     client = OpenAI()
 
     response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {
-        "role": "system",
-        "content": """You are an expert in Bitcoin investing. Analyze the provided data including technical indicators, market data, recent news headlines, the Fear and Greed Index, and the chart image. Tell me whether to buy, sell, or hold at the moment. Consider the following in your analysis:
-        - Technical indicators and market data
-        - Recent news headlines and their potential impact on Bitcoin price
-        - The Fear and Greed Index and its implications
-        - Overall market sentiment
-        - The patterns and trends visible in the chart image
-        - Insights from the YouTube video transcript
-        
-        Response in json format.
-
-        Response Example:
-        {"decision": "buy", "reason": "some technical, fundamental, and sentiment-based reason"}
-        {"decision": "sell", "reason": "some technical, fundamental, and sentiment-based reason"}
-        {"decision": "hold", "reason": "some technical, fundamental, and sentiment-based reason"}"""
-        },
-        {
-        "role": "user",
-        "content": [
+        model="gpt-4o",
+        messages=[
             {
-                "type": "text",
-                "text": f"""Current investment status: {json.dumps(filtered_balances)}
-Orderbook: {json.dumps(orderbook)}
-Daily OHLCV with indicators (30 days): {df_daily.to_json()}
-Hourly OHLCV with indicators (24 hours): {df_hourly.to_json()}
-Recent news headlines: {json.dumps(news_headlines)}
-Fear and Greed Index: {json.dumps(fear_greed_index)}
-YouTube Video Transcript: {youtube_transcript}"""
+                "role": "system",
+                "content": """You are an expert in Bitcoin investing. Analyze the provided data including technical indicators, market data, recent news headlines, the Fear and Greed Index, and the chart image. Tell me whether to buy, sell, or hold at the moment. Consider the following in your analysis:
+                - Technical indicators and market data
+                - Recent news headlines and their potential impact on Bitcoin price
+                - The Fear and Greed Index and its implications
+                - Overall market sentiment
+                - The patterns and trends visible in the chart image
+                - Insights from the YouTube video transcript
+                
+                Response in json format.
+
+                Respond with a decision (buy, sell, or hold) and a reason for your decision."""
             },
             {
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{chart_image}"
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"""Current investment status: {json.dumps(filtered_balances)}
+        Orderbook: {json.dumps(orderbook)}
+        Daily OHLCV with indicators (30 days): {df_daily.to_json()}
+        Hourly OHLCV with indicators (24 hours): {df_hourly.to_json()}
+        Recent news headlines: {json.dumps(news_headlines)}
+        Fear and Greed Index: {json.dumps(fear_greed_index)}
+        YouTube Video Transcript: {youtube_transcript}"""
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{chart_image}"
+                        }
+                    }
+                ]
+            }
+        ],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "trading_decision",
+                "strict": True,
+                "schema": {
+                "type": "object",
+                    "properties": {
+                        "decision": {"type": "string", "enum": ["buy", "sell", "hold"]},
+                        "reason": {"type": "string"}
+                    },
+                    "required": ["decision", "reason"],
+                    "additionalProperties": False
                 }
             }
-        ]
-        }
-    ],
-    max_tokens=300,
-    response_format={"type": "json_object"}
+        },
+        max_tokens=300,
     )
+    
     result = json.loads(response.choices[0].message.content)
     decision = result["decision"]
     print(f"### Reason: {result['reason']} ###")
