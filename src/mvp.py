@@ -13,10 +13,7 @@ openai = os.getenv("OPENAI_API_KEY")
 upbit = pyupbit.Upbit(access, secret)
 client = OpenAI()
 
-df_daliy = pyupbit.get_ohlcv("KRW-BTC", count=30, interval="day")
-df_hourly = pyupbit.get_ohlcv("KRW-BTC", count=24, interval="minute60")
-
-print(df_hourly)
+df = pyupbit.get_ohlcv("KRW-BTC", count=30, interval="day")
 
 response = client.chat.completions.create(
   model="gpt-4o",
