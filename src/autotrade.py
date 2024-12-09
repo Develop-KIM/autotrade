@@ -176,7 +176,7 @@ def capture_and_encode_screenshot(driver):
 
 def get_combined_transcript(video_id):
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['ko'])
         combined_text = ' '.join(entry['text'] for entry in transcript)
         return combined_text
     except Exception as e:
@@ -235,21 +235,27 @@ def ai_trading():
         messages=[
             {
                 "role": "system",
-                "content": """You are an expert in Bitcoin investing. Analyze the provided data including technical indicators, market data, recent news headlines, the Fear and Greed Index, and the chart image. Tell me whether to buy, sell, or hold at the moment. Consider the following in your analysis:
+                "content": f"""You are an expert in Bitcoin investing. Analyze the provided data and determine whether to buy, sell, or hold at the current moment. Consider the following in your analysis:
+
                 - Technical indicators and market data
                 - Recent news headlines and their potential impact on Bitcoin price
                 - The Fear and Greed Index and its implications
                 - Overall market sentiment
-                - The patterns and trends visible in the chart image
-                - Insights from the YouTube video transcript
+                - Patterns and trends visible in the chart image
                 
-                Respond with:
-                1. A decision (buy, sell, or hold)
+                Particularly important is to always refer to the trading method of 'Wonyyotti', a legendary Korean investor, to assess the current situation and make trading decisions. Wonyyotti's trading method is as follows:
+
+                {youtube_transcript}
+
+                Based on this trading method, analyze the current market situation and make a judgment by synthesizing it with the provided data.
+
+                Response format:
+                1. Decision (buy, sell, or hold)
                 2. If the decision is 'buy', provide a percentage (1-100) of available KRW to use for buying.
                 If the decision is 'sell', provide a percentage (1-100) of held BTC to sell.
                 If the decision is 'hold', set the percentage to 0.
-                3. A reason for your decision
-                
+                3. Reason for your decision
+
                 Ensure that the percentage is an integer between 1 and 100 for buy/sell decisions, and exactly 0 for hold decisions.
                 Your percentage should reflect the strength of your conviction in the decision based on the analyzed data."""
             },
@@ -263,8 +269,7 @@ def ai_trading():
         Daily OHLCV with indicators (30 days): {df_daily.to_json()}
         Hourly OHLCV with indicators (24 hours): {df_hourly.to_json()}
         Recent news headlines: {json.dumps(news_headlines)}
-        Fear and Greed Index: {json.dumps(fear_greed_index)}
-        YouTube Video Transcript: {youtube_transcript}"""
+        Fear and Greed Index: {json.dumps(fear_greed_index)}"""   
                     },
                     {
                         "type": "image_url",
@@ -295,11 +300,12 @@ def ai_trading():
         max_tokens=300,
     )
     
-    result = json.loads(response.choices[0].message.content)
-    decision = result["decision"]
-    print(f"### Reason: {result['reason']} ###")
+    result = TradingDecision.model_validate_json(response.choices[0].message.content)
 
-    if decision == "buy":
+    print(f"### AI Decision: {result.decision.upper()} ###")
+    print(f"### Reason: {result.reason} ###")
+
+    if result.decision == "buy":
         my_krw = upbit.get_balance("KRW")
         buy_amount = my_krw * (result.percentage / 100) * 0.9995
         if my_krw*0.9995 > 5000:
@@ -307,7 +313,7 @@ def ai_trading():
             print(upbit.buy_market_order("KRW-BTC", buy_amount))
         else:
             print("### Buy Order Failed: Insufficient KRW (less than 5000 KRW) ###")
-    elif decision == "sell":
+    elif result.decision == "sell":
         my_btc = upbit.get_balance("KRW-BTC")
         sell_amount = my_btc * (result.percentage / 100)
         current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
@@ -316,7 +322,7 @@ def ai_trading():
             print(upbit.sell_market_order("KRW-BTC", sell_amount))
         else:
             print("### Sell Order Failed: Insufficient BTC (less than 5000 KRW worth) ###")
-    elif decision == "hold":
+    elif result.decision == "hold":
         print("### Hold Position ###")
 
 ai_trading()
