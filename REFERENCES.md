@@ -1,0 +1,12 @@
+# References
+
+## 라이브러리
+- [PyUpbit GitHub](https://github.com/sharebook-kr/pyupbit): 암호화폐 거래 API
+- [TA GitHub](https://github.com/bukosabino/ta): 기술적 지표 계산
+
+## 문서
+- [OpenAI ChatGPT API 사용법](https://platform.openai.com/docs/)
+
+## API
+- [공포-탐욕 지수 API](https://alternative.me/crypto/fear-and-greed-index/): 암호화폐 시장 심리를 측정하기 위한 공포-탐욕 지수 API
+- [SerpAPI](https://serpapi.com/): Google 뉴스에서 검색해서 결과를 JSON 형식으로 제공하는 API
