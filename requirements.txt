@@ -6,3 +6,5 @@ pyupbit
 ta
 selenium
 webdriver_manager
+Pillow
+youtube-transcript-api 
