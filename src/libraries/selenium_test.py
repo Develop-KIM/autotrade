@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def setup_chrome_options():
     chrome_options = Options()
     chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")  # 디버깅을 위해 헤드리스 모드 비활성화
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
