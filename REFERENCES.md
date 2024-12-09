@@ -8,7 +8,7 @@
 - [Selenium GitHub](https://github.com/SeleniumHQ/selenium): 웹 브라우저 자동화를 위한 Python 기반 도구
 
 ## 문서
-- [OpenAI ChatGPT API 사용법](https://platform.openai.com/docs/)
+- [OpenAI API Docs](https://platform.openai.com/docs/): OpenAI의 GPT 모델을 활용한 API 사용법에 대한 문서
 
 ## API
 - [공포-탐욕 지수 API](https://alternative.me/crypto/fear-and-greed-index/): 암호화폐 시장 심리를 측정하기 위한 공포-탐욕 지수 API
