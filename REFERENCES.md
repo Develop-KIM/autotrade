@@ -4,6 +4,9 @@
 - [PyUpbit GitHub](https://github.com/sharebook-kr/pyupbit): 암호화폐 거래 API
 - [TA GitHub](https://github.com/bukosabino/ta): 기술적 지표 계산
 
+## 자동화 도구
+- [Selenium GitHub](https://github.com/SeleniumHQ/selenium): 웹 브라우저 자동화를 위한 Python 기반 도구
+
 ## 문서
 - [OpenAI ChatGPT API 사용법](https://platform.openai.com/docs/)
 

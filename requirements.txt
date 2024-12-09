@@ -4,3 +4,5 @@ python-dotenv
 openai
 pyupbit
 ta
+selenium
+webdriver_manager
