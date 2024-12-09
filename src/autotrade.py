@@ -23,7 +23,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
-from datetime import datetime
+from datetime import datetime, timedelta
 from youtube_transcript_api import YouTubeTranscriptApi
 from mysql.connector import Error
 
@@ -44,17 +44,18 @@ def init_db():
         
         cursor = connection.cursor()
         
-        cursor.execute('''CREATE TABLE IF NOT EXISTS trades (
+        cursor.execute("""CREATE TABLE IF NOT EXISTS trades (
             id INT AUTO_INCREMENT PRIMARY KEY,
             timestamp DATETIME,
             decision VARCHAR(10),
             percentage INT,
             reason TEXT,
-            btc_balance DECIMAL(20, 8),
-            krw_balance DECIMAL(20, 2),
-            btc_avg_buy_price DECIMAL(20, 2),
-            btc_krw_price DECIMAL(20, 2)
-        )''')
+            btc_balance INT,
+            krw_balance INT,
+            btc_avg_buy_price INT,
+            btc_krw_price INT,
+            reflection TEXT)"""
+        )
         
         connection.commit()
         return connection
@@ -62,19 +63,74 @@ def init_db():
         logger.error(f"Error initializing MySQL database: {e}")
         raise
 
-def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price):
+def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price, reflection):
     try:
         cursor = connection.cursor()
         timestamp = datetime.now()
         query = """INSERT INTO trades 
-                   (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-        values = (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
+                   (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price, reflection) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        values = (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price, reflection)
         
         cursor.execute(query, values)
         connection.commit()
     except Error as e:
         logger.error(f"Error logging trade: {e}")
+
+def get_recent_trades(connection, days=7):
+    try:
+        cursor = connection.cursor(dictionary=True)
+        seven_days_ago = (datetime.now() - timedelta(days=days)).isoformat()
+        cursor.execute("SELECT * FROM trades WHERE timestamp > %s ORDER BY timestamp DESC", (seven_days_ago,))
+        return pd.DataFrame(cursor.fetchall())
+    except Error as e:
+        logger.error(f"Error fetching recent trades: {e}")
+        return pd.DataFrame()
+    
+def calculate_performance(trades_df):
+    if trades_df.empty:
+        return 0
+
+    initial_balance = trades_df.iloc[-1]['krw_balance'] + trades_df.iloc[-1]['btc_balance'] * trades_df.iloc[-1]['btc_krw_price']
+    final_balance = trades_df.iloc[0]['krw_balance'] + trades_df.iloc[0]['btc_balance'] * trades_df.iloc[0]['btc_krw_price']
+
+    return (final_balance - initial_balance) / initial_balance * 100
+
+def generate_reflection(trades_df, current_market_data):
+    performance = calculate_performance(trades_df)
+    
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an AI trading assistant tasked with analyzing recent trading performance and current market conditions to generate insights and improvements for future trading decisions."
+            },
+            {
+                "role": "user",
+                "content": f"""
+                Recent trading data:
+                {trades_df.to_json(orient='records')}
+                
+                Current market data:
+                {current_market_data}
+                
+                Overall performance in the last 7 days: {performance:.2f}%
+                
+                Please analyze this data and provide:
+                1. A brief reflection on the recent trading decisions
+                2. Insights on what worked well and what didn't
+                3. Suggestions for improvement in future trading decisions
+                4. Any patterns or trends you notice in the market data
+                
+                Limit your response to 250 words or less.
+                """
+            }
+        ]
+    )
+    
+    return response.choices[0].message.content
 
 def get_db_connection():
     try:
@@ -268,8 +324,6 @@ def ai_trading():
 
     youtube_transcript = get_combined_transcript("YOUTUBE_TRANSCRIPT")
 
-    connection = get_db_connection()
-
     driver = None
     try:
         driver = create_driver()
@@ -293,6 +347,20 @@ def ai_trading():
 
     client = OpenAI()
 
+    connection = get_db_connection()
+
+    recent_trades = get_recent_trades(connection)
+
+    current_market_data = {
+        "fear_greed_index": fear_greed_index,
+        "news_headlines": news_headlines,
+        "orderbook": orderbook,
+        "daily_ohlcv": df_daily.to_dict(),
+        "hourly_ohlcv": df_hourly.to_dict()
+    }
+    
+    reflection = generate_reflection(recent_trades, current_market_data)
+
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -305,7 +373,11 @@ def ai_trading():
                 - The Fear and Greed Index and its implications
                 - Overall market sentiment
                 - Patterns and trends visible in the chart image
-                
+                - Recent trading performance and reflection
+
+                Recent trading reflection:
+                {reflection}
+
                 Particularly important is to always refer to the trading method of 'Wonyyotti', a legendary Korean investor, to assess the current situation and make trading decisions. Wonyyotti's trading method is as follows:
 
                 {youtube_transcript}
@@ -397,24 +469,14 @@ def ai_trading():
     elif result.decision == "hold":
         print("### Hold Position ###")
 
-    time.sleep(1)  # API 호출 제한을 고려하여 잠시 대기
+    time.sleep(1)
     balances = upbit.get_balances()
     btc_balance = next((float(balance['balance']) for balance in balances if balance['currency'] == 'BTC'), 0)
     krw_balance = next((float(balance['balance']) for balance in balances if balance['currency'] == 'KRW'), 0)
     btc_avg_buy_price = next((float(balance['avg_buy_price']) for balance in balances if balance['currency'] == 'BTC'), 0)
     current_btc_price = pyupbit.get_current_price("KRW-BTC")
 
-    # 7. 거래 정보 로깅
-    log_trade(
-        connection,
-        result.decision,
-        result.percentage if order_executed else 0,
-        result.reason,
-        btc_balance,
-        krw_balance,
-        btc_avg_buy_price,
-        current_btc_price,
-    )
+    log_trade(connection, result.decision, result.percentage if order_executed else 0, result.reason, btc_balance, krw_balance, btc_avg_buy_price, current_btc_price, reflection)
 
 ai_trading()
 
