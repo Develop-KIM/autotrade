@@ -22,6 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
 from datetime import datetime
+from youtube_transcript_api import YouTubeTranscriptApi
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -167,6 +168,15 @@ def capture_and_encode_screenshot(driver):
         logger.error(f"스크린샷 캡처 및 인코딩 중 오류 발생: {e}")
         return None, None
 
+def get_combined_transcript(video_id):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        combined_text = ' '.join(entry['text'] for entry in transcript)
+        return combined_text
+    except Exception as e:
+        logger.error(f"Error fetching YouTube transcript: {e}")
+        return ""
+
 def ai_trading():
     access = os.getenv("UPBIT_ACCESS_KEY")
     secret = os.getenv("UPBIT_SECRET_KEY")
@@ -188,6 +198,8 @@ def ai_trading():
     fear_greed_index = get_fear_and_greed_index()
 
     news_headlines = get_bitcoin_news()
+
+    youtube_transcript = get_combined_transcript("YOUTUBE_TRANSCRIPT")
 
     driver = None
     try:
@@ -223,6 +235,7 @@ def ai_trading():
         - The Fear and Greed Index and its implications
         - Overall market sentiment
         - The patterns and trends visible in the chart image
+        - Insights from the YouTube video transcript
         
         Response in json format.
 
@@ -237,11 +250,12 @@ def ai_trading():
             {
                 "type": "text",
                 "text": f"""Current investment status: {json.dumps(filtered_balances)}
-                            Orderbook: {json.dumps(orderbook)}
-                            Daily OHLCV with indicators (30 days): {df_daily.to_json()}
-                            Hourly OHLCV with indicators (24 hours): {df_hourly.to_json()}
-                            Recent news headlines: {json.dumps(news_headlines)}
-                            Fear and Greed Index: {json.dumps(fear_greed_index)}"""
+Orderbook: {json.dumps(orderbook)}
+Daily OHLCV with indicators (30 days): {df_daily.to_json()}
+Hourly OHLCV with indicators (24 hours): {df_hourly.to_json()}
+Recent news headlines: {json.dumps(news_headlines)}
+Fear and Greed Index: {json.dumps(fear_greed_index)}
+YouTube Video Transcript: {youtube_transcript}"""
             },
             {
                 "type": "image_url",
