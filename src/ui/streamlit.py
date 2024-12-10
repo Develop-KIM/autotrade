@@ -79,7 +79,7 @@ try:
         else:
             profit_rate = ((current_total_balance - initial_total_balance) / initial_total_balance) * 100
 
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("총 매매 횟수", total_trades)
         col2.metric("첫 거래 일자", first_trade_date)
         col3.metric("마지막 거래 일자", last_trade_date)
