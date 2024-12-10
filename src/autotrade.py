@@ -306,8 +306,8 @@ def send_slack_notification(decision, coin, quantity, avg_price, krw):
         logger.error("Slack Webhook URL이 설정되지 않았습니다.")
         return
     
-    krw_formatted = f"{abs(krw):,} KRW"  # 금액을 양수로 포맷팅
-    prefix = "수익" if krw >= 0 else "손실"  # 수익 또는 손실 여부 확인
+    krw_formatted = f"{abs(krw):,} KRW"
+    prefix = "수익" if krw >= 0 else "손실"
     
     if decision == "buy":
         message = f"🔔 [매수 알림]\n- 구매 코인: {coin}\n- 구매 수량: {quantity:.8f}\n- 구매 평단가: {avg_price:,} KRW\n- 사용 금액: {krw_formatted}"
@@ -474,7 +474,7 @@ def ai_trading():
     if result.decision == "buy":
         my_krw = upbit.get_balance("KRW")
         buy_amount = my_krw * (result.percentage / 100) * 0.9995
-        if my_krw*0.9995 > 5000:
+        if my_krw * 0.9995 > 5000:
             print(f"### Buy Order Executed: {result.percentage}% of available KRW ###")
             order = upbit.buy_market_order("KRW-BTC", buy_amount)
             if order:
@@ -516,7 +516,7 @@ def ai_trading():
 while True:
     try:
         ai_trading()
-        time.sleep(600)
+        time.sleep(600) 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         time.sleep(300)
