@@ -207,21 +207,24 @@ def get_bitcoin_news():
         logger.error(f"Error fetching news: {e}")
         return []
 
-def setup_chrome_options():
-    chrome_options = Options()
-    chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    return chrome_options
-
 def create_driver():
     logger.info("ChromeDriver 설정 중...")
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=setup_chrome_options())
-    return driver
+    try:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")  # 헤드리스 모드 사용
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+
+        service = Service('/usr/bin/chromedriver')  # Specify the path to the ChromeDriver executable
+
+        # Initialize the WebDriver with the specified options
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+
+        return driver
+    except Exception as e:
+        logger.error(f"ChromeDriver 생성 중 오류 발생: {e}")
+        raise
 
 def click_element_by_xpath(driver, xpath, element_name, wait_time=10):
     try:
@@ -322,7 +325,11 @@ def ai_trading():
 
     news_headlines = get_bitcoin_news()
 
-    youtube_transcript = get_combined_transcript(os.getenv("YOUTUBE_TRANSCRIPT"))
+    # youtube_transcript = get_combined_transcript(os.getenv("YOUTUBE_TRANSCRIPT"))
+
+    f = open("strategy.txt", "r", encoding="utf-8")
+    youtube_transcript = f.read()
+    f.close()
 
     driver = None
     saved_file_path = None
