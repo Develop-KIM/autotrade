@@ -23,7 +23,8 @@ MVP 단계로 시작하여 점진적으로 기능을 확장합니다.
 ### 1. 가상환경 설정
 ```bash
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Mac    : source venv/bin/activate  
+# Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 

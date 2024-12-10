@@ -60,7 +60,7 @@ def init_db():
         connection.commit()
         return connection
     except Error as e:
-        logger.error(f"Error initializing MySQL database: {e}")
+        logger.error(f"MySQL 초기화 실패: {e}")
         raise
 
 def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price, reflection):
@@ -75,8 +75,7 @@ def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance
         cursor.execute(query, values)
         connection.commit()
     except Error as e:
-        logger.error(f"Error logging trade: {e}")
-
+        logger.error(f"거래 기록 중 오류 발생: {e}")
 def get_recent_trades(connection, days=7):
     try:
         cursor = connection.cursor(dictionary=True)
@@ -84,7 +83,7 @@ def get_recent_trades(connection, days=7):
         cursor.execute("SELECT * FROM trades WHERE timestamp > %s ORDER BY timestamp DESC", (seven_days_ago,))
         return pd.DataFrame(cursor.fetchall())
     except Error as e:
-        logger.error(f"Error fetching recent trades: {e}")
+        logger.error(f"최근 거래를 가져오는 중 오류 발생: {e}")
         return pd.DataFrame()
     
 def calculate_performance(trades_df):
@@ -143,7 +142,7 @@ def get_db_connection():
         )
         return connection
     except Error as e:
-        logger.error(f"Error connecting to MySQL database: {e}")
+        logger.error(f"MySQL 연결 실패: {e}")
         raise
 
 logging.basicConfig(level=logging.INFO)
@@ -178,7 +177,7 @@ def get_fear_and_greed_index():
         data = response.json()
         return data['data'][0]
     else:
-        logger.error(f"Failed to fetch Fear and Greed Index. Status code: {response.status_code}")
+        logger.error(f"공포와 탐욕 지수를 가져오는 데 실패했습니다. 상태 코드: {response.status_code}");
         return None
 
 def get_bitcoin_news():
@@ -298,7 +297,7 @@ def get_combined_transcript(video_id):
         combined_text = ' '.join(entry['text'] for entry in transcript)
         return combined_text
     except Exception as e:
-        logger.error(f"Error fetching YouTube transcript: {e}")
+        logger.error(f"YouTube 자막을 가져오는 중 오류 발생: {e}")
         return ""
 
 def send_slack_notification(decision, coin, quantity, avg_price, krw):
@@ -466,9 +465,8 @@ def ai_trading():
     
     result = TradingDecision.model_validate_json(response.choices[0].message.content)
 
-    print(f"### AI Decision: {result.decision.upper()} ###")
-
-    print(f"### Reason: {result.reason} ###")
+    print(f"AI 결정: {result.decision.upper()}")
+    print(f"이유   : {result.reason}")
 
     order_executed = False
 
@@ -476,27 +474,27 @@ def ai_trading():
         my_krw = upbit.get_balance("KRW")
         buy_amount = my_krw * (result.percentage / 100) * 0.9995
         if my_krw * 0.9995 > 5000:
-            print(f"### Buy Order Executed: {result.percentage}% of available KRW ###")
+            print(f"매수 주문 실행: 사용 가능한 원화의 {result.percentage}%")
             order = upbit.buy_market_order("KRW-BTC", buy_amount)
             if order:
                 order_executed = True
             print(order)
         else:
-            print("### Buy Order Failed: Insufficient KRW (less than 5000 KRW) ###")
+            print("매수 주문 실패: 원화 부족 (5,000 KRW 미만)")
     elif result.decision == "sell":
         my_btc = upbit.get_balance("KRW-BTC")
         sell_amount = my_btc * (result.percentage / 100)
         current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
         if my_btc*current_price > 5000:
-            print(f"### Sell Order Executed: {result.percentage}% of held BTC ###")
+            print(f"매도 주문 실행: 보유한 비트코인의 {result.percentage}%")
             order = upbit.sell_market_order("KRW-BTC", sell_amount)
             if order:
                 order_executed = True
             print(order)
         else:
-            print("### Sell Order Failed: Insufficient BTC (less than 5000 KRW worth) ###")
+            print("매도 주문 실패: 비트코인 부족 (5,000 KRW 가치 미만)")
     elif result.decision == "hold":
-        print("### Hold Position ###")
+        print("보유 유지")
 
     time.sleep(1)
     balances = upbit.get_balances()
@@ -516,9 +514,8 @@ def ai_trading():
 
 while True:
     try:
-        
         ai_trading()
         time.sleep(600) 
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(f"오류가 발생했습니다: {e}")
         time.sleep(300)
