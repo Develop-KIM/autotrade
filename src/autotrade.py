@@ -474,7 +474,7 @@ def ai_trading():
     if result.decision == "buy":
         my_krw = upbit.get_balance("KRW")
         buy_amount = my_krw * (result.percentage / 100) * 0.9995
-        if my_krw*0.9995 > 5000:
+        if my_krw * 0.9995 > 5000:
             print(f"### Buy Order Executed: {result.percentage}% of available KRW ###")
             order = upbit.buy_market_order("KRW-BTC", buy_amount)
             if order:
