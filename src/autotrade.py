@@ -149,6 +149,7 @@ def get_db_connection():
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 load_dotenv()
 init_db()
 
@@ -349,7 +350,7 @@ def ai_trading():
 
     news_headlines = get_bitcoin_news()
 
-    youtube_transcript = get_combined_transcript("YOUTUBE_TRANSCRIPT")
+    youtube_transcript = get_combined_transcript(os.getenv("YOUTUBE_TRANSCRIPT"))
 
     driver = None
     saved_file_path = None
@@ -515,6 +516,7 @@ def ai_trading():
 
 while True:
     try:
+        
         ai_trading()
         time.sleep(600) 
     except Exception as e:
