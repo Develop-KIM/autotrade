@@ -300,6 +300,33 @@ def get_combined_transcript(video_id):
         logger.error(f"Error fetching YouTube transcript: {e}")
         return ""
 
+def send_slack_notification(decision, coin, quantity, avg_price, krw):
+    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+    if not webhook_url:
+        logger.error("Slack Webhook URL이 설정되지 않았습니다.")
+        return
+    
+    krw_formatted = f"{abs(krw):,} KRW"  # 금액을 양수로 포맷팅
+    prefix = "수익" if krw >= 0 else "손실"  # 수익 또는 손실 여부 확인
+    
+    if decision == "buy":
+        message = f"🔔 [매수 알림]\n- 구매 코인: {coin}\n- 구매 수량: {quantity:.8f}\n- 구매 평단가: {avg_price:,} KRW\n- 사용 금액: {krw_formatted}"
+    elif decision == "sell":
+        message = f"🔔 [매도 알림]\n- 판매 코인: {coin}\n- 판매 수량: {quantity:.8f}\n- 판매 평단가: {avg_price:,} KRW\n- {prefix} 금액: {krw_formatted}"
+    else:
+        logger.warning("Slack 알림은 매수 또는 매도 결정에만 발송됩니다.")
+        return
+    
+    payload = {"text": message}
+    try:
+        response = requests.post(webhook_url, json=payload)
+        if response.status_code == 200:
+            logger.info("Slack 알림이 성공적으로 전송되었습니다.")
+        else:
+            logger.error(f"Slack 알림 전송 실패: {response.status_code}, {response.text}")
+    except requests.RequestException as e:
+        logger.error(f"Slack 알림 전송 중 오류 발생: {e}")
+
 def ai_trading():
     access = os.getenv("UPBIT_ACCESS_KEY")
     secret = os.getenv("UPBIT_SECRET_KEY")
@@ -325,6 +352,7 @@ def ai_trading():
     youtube_transcript = get_combined_transcript("YOUTUBE_TRANSCRIPT")
 
     driver = None
+    saved_file_path = None
     try:
         driver = create_driver()
         driver.get("https://upbit.com/full_chart?code=CRIX.UPBIT.KRW-BTC")
@@ -477,6 +505,13 @@ def ai_trading():
     current_btc_price = pyupbit.get_current_price("KRW-BTC")
 
     log_trade(connection, result.decision, result.percentage if order_executed else 0, result.reason, btc_balance, krw_balance, btc_avg_buy_price, current_btc_price, reflection)
+
+    if saved_file_path and os.path.exists(saved_file_path):
+        try:
+            os.remove(saved_file_path)
+            logger.info(f"스냅샷 파일 삭제 완료: {saved_file_path}")
+        except Exception as e:
+            logger.error(f"스냅샷 파일 삭제 중 오류 발생: {e}")
 
 while True:
     try:
