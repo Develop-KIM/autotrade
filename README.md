@@ -19,7 +19,7 @@ AI 기반 비트코인 자동매매 시스템
 
 <img width="1399" alt="스크린샷 2024-12-10 오전 1 37 35" src="https://github.com/user-attachments/assets/d041a04c-fdef-4267-be82-e986363ff702">
 
-**거래기록 회고 및 복기 학습**
+**거래 회고 및 복기 학습**
  ```
  - 거래 기록을 남기는 데에 마치지 않고 해당 거래에서의 판단 근거 및 거래 이후 개선점을 기록 및 재학습
  - 자동적으로 재학습함으로써 점진적으로 해당 서비스의 신뢰도 향상 가능
@@ -44,7 +44,7 @@ AI 기반 비트코인 자동매매 시스템
 ### 사용자 인터페이스
 <img width="1361" alt="스크린샷 2024-12-11 오후 9 44 46" src="https://github.com/user-attachments/assets/44223801-a211-4447-b85a-5ae507479239">
 
-<img width="1353" alt="스크린샷 2024-12-11 오후 9 44 52" src="https://github.com/user-attachments/assets/7a9da56a-0dd9-4f25-a31c-dded0dc3b88e">
+<img width="1357" alt="결정 분포" src="https://github.com/user-attachments/assets/dfa94af1-80b6-470c-a4ab-26538cf3690a" />
 
 <img width="1359" alt="스크린샷 2024-12-11 오후 9 44 57" src="https://github.com/user-attachments/assets/35fb7809-f6dc-4b10-afb3-62920012ac5a">
 
