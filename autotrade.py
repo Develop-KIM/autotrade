@@ -207,63 +207,63 @@ def get_bitcoin_news():
         logger.error(f"Error fetching news: {e}")
         return []
 
-def create_driver():
-    logger.info("ChromeDriver 설정 중...")
-    try:
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")  # 헤드리스 모드 사용
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
+# def create_driver():
+#     logger.info("ChromeDriver 설정 중...")
+#     try:
+#         chrome_options = Options()
+#         chrome_options.add_argument("--headless")  # 헤드리스 모드 사용
+#         chrome_options.add_argument("--no-sandbox")
+#         chrome_options.add_argument("--disable-dev-shm-usage")
+#         chrome_options.add_argument("--disable-gpu")
 
-        service = Service('/usr/bin/chromedriver')  # Specify the path to the ChromeDriver executable
+#         service = Service('/usr/bin/chromedriver')  # Specify the path to the ChromeDriver executable
 
-        # Initialize the WebDriver with the specified options
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        return driver
-    except Exception as e:
-        logger.error(f"ChromeDriver 생성 중 오류 발생: {e}")
-        raise
+#         # Initialize the WebDriver with the specified options
+#         driver = webdriver.Chrome(service=service, options=chrome_options)
+#         return driver
+#     except Exception as e:
+#         logger.error(f"ChromeDriver 생성 중 오류 발생: {e}")
+#         raise
 
-def click_element_by_xpath(driver, xpath, element_name, wait_time=10):
-    try:
-        element = WebDriverWait(driver, wait_time).until(
-            EC.element_to_be_clickable((By.XPATH, xpath))
-        )
-        element.click()
-        logger.info(f"{element_name} 클릭 완료")
-        time.sleep(2)
-    except TimeoutException:
-        logger.error(f"{element_name} 요소를 찾는 데 시간이 초과되었습니다.")
-    except ElementClickInterceptedException:
-        logger.error(f"{element_name} 요소를 클릭할 수 없습니다. 다른 요소에 가려져 있을 수 있습니다.")
-    except Exception as e:
-        logger.error(f"{element_name} 클릭 중 오류 발생: {e}")
+# def click_element_by_xpath(driver, xpath, element_name, wait_time=10):
+#     try:
+#         element = WebDriverWait(driver, wait_time).until(
+#             EC.element_to_be_clickable((By.XPATH, xpath))
+#         )
+#         element.click()
+#         logger.info(f"{element_name} 클릭 완료")
+#         time.sleep(2)
+#     except TimeoutException:
+#         logger.error(f"{element_name} 요소를 찾는 데 시간이 초과되었습니다.")
+#     except ElementClickInterceptedException:
+#         logger.error(f"{element_name} 요소를 클릭할 수 없습니다. 다른 요소에 가려져 있을 수 있습니다.")
+#     except Exception as e:
+#         logger.error(f"{element_name} 클릭 중 오류 발생: {e}")
 
-def perform_chart_actions(driver):
-    click_element_by_xpath(
-        driver,
-        "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[1]",
-        "시간 메뉴"
-    )
+# def perform_chart_actions(driver):
+#     click_element_by_xpath(
+#         driver,
+#         "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[1]",
+#         "시간 메뉴"
+#     )
     
-    click_element_by_xpath(
-        driver,
-        "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[1]/cq-menu-dropdown/cq-item[8]",
-        "1시간 옵션"
-    )
+#     click_element_by_xpath(
+#         driver,
+#         "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[1]/cq-menu-dropdown/cq-item[8]",
+#         "1시간 옵션"
+#     )
     
-    click_element_by_xpath(
-        driver,
-        "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[3]",
-        "지표 메뉴"
-    )
+#     click_element_by_xpath(
+#         driver,
+#         "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[3]",
+#         "지표 메뉴"
+#     )
     
-    click_element_by_xpath(
-        driver,
-        "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[3]/cq-menu-dropdown/cq-scroll/cq-studies/cq-studies-content/cq-item[15]",
-        "볼린저 밴드 옵션"
-    )
+#     click_element_by_xpath(
+#         driver,
+#         "/html/body/div[1]/div[2]/div[3]/span/div/div/div[1]/div/div/cq-menu[3]/cq-menu-dropdown/cq-scroll/cq-studies/cq-studies-content/cq-item[15]",
+#         "볼린저 밴드 옵션"
+#     )
 
 def capture_and_encode_screenshot(driver):
     try:
@@ -330,27 +330,27 @@ def ai_trading():
     youtube_transcript = f.read()
     f.close()
 
-    driver = None
-    saved_file_path = None
-    try:
-        driver = create_driver()
-        driver.get("https://upbit.com/full_chart?code=CRIX.UPBIT.KRW-BTC")
-        logger.info("페이지 로드 완료")
-        time.sleep(30)
-        logger.info("차트 작업 시작")
-        perform_chart_actions(driver)
-        logger.info("차트 작업 완료")
-        chart_image, saved_file_path = capture_and_encode_screenshot(driver)
-        logger.info(f"스크린샷 캡처 완료. 저장된 파일 경로: {saved_file_path}")
-    except WebDriverException as e:
-        logger.error(f"WebDriver 오류 발생: {e}")
-        chart_image, saved_file_path = None, None
-    except Exception as e:
-        logger.error(f"차트 캡처 중 오류 발생: {e}")
-        chart_image, saved_file_path = None, None
-    finally:
-        if driver:
-            driver.quit()
+    # driver = None
+    # saved_file_path = None
+    # try:
+    #     driver = create_driver()
+    #     driver.get("https://upbit.com/full_chart?code=CRIX.UPBIT.KRW-BTC")
+    #     logger.info("페이지 로드 완료")
+    #     time.sleep(30)
+    #     logger.info("차트 작업 시작")
+    #     perform_chart_actions(driver)
+    #     logger.info("차트 작업 완료")
+    #     chart_image, saved_file_path = capture_and_encode_screenshot(driver)
+    #     logger.info(f"스크린샷 캡처 완료. 저장된 파일 경로: {saved_file_path}")
+    # except WebDriverException as e:
+    #     logger.error(f"WebDriver 오류 발생: {e}")
+    #     chart_image, saved_file_path = None, None
+    # except Exception as e:
+    #     logger.error(f"차트 캡처 중 오류 발생: {e}")
+    #     chart_image, saved_file_path = None, None
+    # finally:
+    #     if driver:
+    #         driver.quit()
 
     client = OpenAI()
 
@@ -413,12 +413,12 @@ def ai_trading():
         Recent news headlines: {json.dumps(news_headlines)}
         Fear and Greed Index: {json.dumps(fear_greed_index)}"""   
                     },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{chart_image}"
-                        }
-                    }
+                    # {
+                    #     "type": "image_url",
+                    #     "image_url": {
+                    #         "url": f"data:image/png;base64,{chart_image}"
+                    #     }
+                    # }
                 ]
             }
         ],
@@ -484,12 +484,12 @@ def ai_trading():
 
     log_trade(connection, result.decision, result.percentage if order_executed else 0, result.reason, btc_balance, krw_balance, btc_avg_buy_price, current_btc_price, reflection)
 
-    if saved_file_path and os.path.exists(saved_file_path):
-        try:
-            os.remove(saved_file_path)
-            logger.info(f"스냅샷 파일 삭제 완료: {saved_file_path}")
-        except Exception as e:
-            logger.error(f"스냅샷 파일 삭제 중 오류 발생: {e}")
+    # if saved_file_path and os.path.exists(saved_file_path):
+    #     try:
+    #         os.remove(saved_file_path)
+    #         logger.info(f"스냅샷 파일 삭제 완료: {saved_file_path}")
+    #     except Exception as e:
+    #         logger.error(f"스냅샷 파일 삭제 중 오류 발생: {e}")
 
 while True:
     try:
