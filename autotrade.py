@@ -149,7 +149,6 @@ def get_db_connection():
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 load_dotenv()
 init_db()
 
