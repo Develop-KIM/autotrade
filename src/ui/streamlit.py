@@ -74,7 +74,7 @@ try:
             df.iloc[0]["KRW 잔고"] + df.iloc[0]["BTC 잔고"] * df.iloc[0]["BTC 현재가"]
         )
 
-        if initial_total_balance == 1000000:
+        if initial_total_balance == 950000:
             profit_rate = 0
         else:
             profit_rate = ((current_total_balance - initial_total_balance) / initial_total_balance) * 100
