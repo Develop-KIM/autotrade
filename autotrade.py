@@ -76,6 +76,7 @@ def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance
         connection.commit()
     except Error as e:
         logger.error(f"거래 기록 중 오류 발생: {e}")
+
 def get_recent_trades(connection, days=7):
     try:
         cursor = connection.cursor(dictionary=True)
@@ -147,7 +148,6 @@ def get_db_connection():
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 load_dotenv()
 init_db()
