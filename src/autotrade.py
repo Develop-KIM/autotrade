@@ -486,7 +486,7 @@ def ai_trading():
 while True:
     try:
         ai_trading()
-        time.sleep(600) 
+        time.sleep(1200) 
     except Exception as e:
         logger.error(f"오류가 발생했습니다: {e}")
         time.sleep(300)

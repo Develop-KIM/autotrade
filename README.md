@@ -42,15 +42,16 @@ AI 기반 비트코인 자동매매 시스템
 - **Tools**: <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=GitHub&logoColor=white"/>
 
 ### 사용자 인터페이스
-<img width="1361" alt="스크린샷 2024-12-11 오후 9 44 46" src="https://github.com/user-attachments/assets/44223801-a211-4447-b85a-5ae507479239">
+<img width="1361" alt="스크린샷 2024-12-12 오전 9 21 48" src="https://github.com/user-attachments/assets/c031c93f-25d0-4560-aab3-9fe7fd55f8a2" />
 
-<img width="1357" alt="결정 분포" src="https://github.com/user-attachments/assets/dfa94af1-80b6-470c-a4ab-26538cf3690a" />
+<img width="1344" alt="스크린샷 2024-12-12 오전 9 21 54" src="https://github.com/user-attachments/assets/0d2a4baf-c31c-46ad-86b2-42437781b250" />
 
-<img width="1359" alt="스크린샷 2024-12-11 오후 9 44 57" src="https://github.com/user-attachments/assets/35fb7809-f6dc-4b10-afb3-62920012ac5a">
+<img width="1363" alt="스크린샷 2024-12-12 오전 9 21 59" src="https://github.com/user-attachments/assets/a078a767-4986-4d52-b447-9cc2e11a4506" />
 
-<img width="1041" alt="스크린샷 2024-12-11 오후 9 49 52" src="https://github.com/user-attachments/assets/bfd74eaa-f648-436d-bae9-ec2b2d270ddd">
+<img width="1381" alt="스크린샷 2024-12-12 오전 9 22 04" src="https://github.com/user-attachments/assets/bc9c5644-2668-4585-9432-0d0ba1643948" />
 
 ### 서버 로그
+
 <img width="898" alt="스크린샷 2024-12-11 오후 9 44 11" src="https://github.com/user-attachments/assets/f72bb973-2722-47a1-b5e6-d5753e4a33c0">
 
 ## 🛠️ 설치 및 실행
