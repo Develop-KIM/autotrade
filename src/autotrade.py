@@ -150,7 +150,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 init_db()
-
+    
 def add_indicators(df):
     indicator_bb = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
     df['bb_bbm'] = indicator_bb.bollinger_mavg()
