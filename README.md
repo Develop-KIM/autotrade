@@ -13,11 +13,9 @@ AI 기반 비트코인 자동매매 시스템
  ```
  - API에서 구조화된 출력을 제공하는 GPT모델
  - 해당 모델을 사용하여 JSON 형태로 출력을 받음으로써 별도의 데이터 가공 없이 추가 기능에 활용 가능
- - 일반 모델에서 프롬프트로 작업을 하였을때에 비해 정확도 60% 향상 및 응답 속도 10% 향상
+ - 일반 모델에서 프롬프트로 작업을 하였을때에 비해 정확도 60% 향상
  ```
 <img width="728" alt="스크린샷 2024-12-10 오전 1 29 45" src="https://github.com/user-attachments/assets/fddf0a6b-d210-4023-9574-b6765e5cc201">
-
-<img width="1399" alt="스크린샷 2024-12-10 오전 1 37 35" src="https://github.com/user-attachments/assets/d041a04c-fdef-4267-be82-e986363ff702">
 
 **거래 회고 및 복기 학습**
  ```
@@ -29,9 +27,9 @@ AI 기반 비트코인 자동매매 시스템
 
 ## 👥 Team
 
-|김동환|양이준|박찬우|
-|:---:|:---:|:---:|
-|FE / BE|BE| ? |
+|김동환|양이준|
+|:---:|:---:|
+|FE / BE|BE|
 
 ## 👨‍💻 개발 환경
 
@@ -40,19 +38,6 @@ AI 기반 비트코인 자동매매 시스템
 - **Database**: <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white" alt="MySQL">
 - **Infrastructure & Deployment**: <img src="https://img.shields.io/badge/AWS EC2-FF9900?style=flat-square&logo=Amazon-AWS&logoColor=white" alt="AWS EC2"> <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=Docker&logoColor=white" alt="Docker">
 - **Tools**: <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=GitHub&logoColor=white"/>
-
-### 사용자 인터페이스
-<img width="1361" alt="스크린샷 2024-12-12 오전 9 21 48" src="https://github.com/user-attachments/assets/c031c93f-25d0-4560-aab3-9fe7fd55f8a2" />
-
-<img width="1344" alt="스크린샷 2024-12-12 오전 9 21 54" src="https://github.com/user-attachments/assets/0d2a4baf-c31c-46ad-86b2-42437781b250" />
-
-<img width="1363" alt="스크린샷 2024-12-12 오전 9 21 59" src="https://github.com/user-attachments/assets/a078a767-4986-4d52-b447-9cc2e11a4506" />
-
-<img width="1381" alt="스크린샷 2024-12-12 오전 9 22 04" src="https://github.com/user-attachments/assets/bc9c5644-2668-4585-9432-0d0ba1643948" />
-
-### 서버 로그
-
-<img width="898" alt="스크린샷 2024-12-11 오후 9 44 11" src="https://github.com/user-attachments/assets/f72bb973-2722-47a1-b5e6-d5753e4a33c0">
 
 ## 🛠️ 설치 및 실행
 
