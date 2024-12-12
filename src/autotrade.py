@@ -57,8 +57,7 @@ def init_db():
             reflection TEXT)"""
         )
         
-        connection.commit()
-        return connection
+        return connection.commit()
     except Error as e:
         logger.error(f"MySQL 초기화 실패: {e}")
         raise
@@ -76,6 +75,7 @@ def log_trade(connection, decision, percentage, reason, btc_balance, krw_balance
         connection.commit()
     except Error as e:
         logger.error(f"거래 기록 중 오류 발생: {e}")
+
 def get_recent_trades(connection, days=7):
     try:
         cursor = connection.cursor(dictionary=True)
@@ -486,7 +486,7 @@ def ai_trading():
 while True:
     try:
         ai_trading()
-        time.sleep(600) 
+        time.sleep(1800) 
     except Exception as e:
         logger.error(f"오류가 발생했습니다: {e}")
         time.sleep(300)

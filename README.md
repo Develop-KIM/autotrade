@@ -13,11 +13,9 @@ AI 기반 비트코인 자동매매 시스템
  ```
  - API에서 구조화된 출력을 제공하는 GPT모델
  - 해당 모델을 사용하여 JSON 형태로 출력을 받음으로써 별도의 데이터 가공 없이 추가 기능에 활용 가능
- - 일반 모델에서 프롬프트로 작업을 하였을때에 비해 정확도 60% 향상 및 응답 속도 10% 향상
+ - 일반 모델에서 프롬프트로 작업을 하였을때에 비해 정확도 60% 향상
  ```
 <img width="728" alt="스크린샷 2024-12-10 오전 1 29 45" src="https://github.com/user-attachments/assets/fddf0a6b-d210-4023-9574-b6765e5cc201">
-
-<img width="1399" alt="스크린샷 2024-12-10 오전 1 37 35" src="https://github.com/user-attachments/assets/d041a04c-fdef-4267-be82-e986363ff702">
 
 **거래 회고 및 복기 학습**
  ```
@@ -29,9 +27,9 @@ AI 기반 비트코인 자동매매 시스템
 
 ## 👥 Team
 
-|김동환|양이준|박찬우|
-|:---:|:---:|:---:|
-|FE / BE|BE| ??? |
+|김동환|양이준|
+|:---:|:---:|
+|FE / BE|BE|
 
 ## 👨‍💻 개발 환경
 
@@ -40,18 +38,6 @@ AI 기반 비트코인 자동매매 시스템
 - **Database**: <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white" alt="MySQL">
 - **Infrastructure & Deployment**: <img src="https://img.shields.io/badge/AWS EC2-FF9900?style=flat-square&logo=Amazon-AWS&logoColor=white" alt="AWS EC2"> <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=Docker&logoColor=white" alt="Docker">
 - **Tools**: <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=GitHub&logoColor=white"/>
-
-### 사용자 인터페이스
-<img width="1361" alt="스크린샷 2024-12-11 오후 9 44 46" src="https://github.com/user-attachments/assets/44223801-a211-4447-b85a-5ae507479239">
-
-<img width="1357" alt="결정 분포" src="https://github.com/user-attachments/assets/dfa94af1-80b6-470c-a4ab-26538cf3690a" />
-
-<img width="1359" alt="스크린샷 2024-12-11 오후 9 44 57" src="https://github.com/user-attachments/assets/35fb7809-f6dc-4b10-afb3-62920012ac5a">
-
-<img width="1041" alt="스크린샷 2024-12-11 오후 9 49 52" src="https://github.com/user-attachments/assets/bfd74eaa-f648-436d-bae9-ec2b2d270ddd">
-
-### 서버 로그
-<img width="898" alt="스크린샷 2024-12-11 오후 9 44 11" src="https://github.com/user-attachments/assets/f72bb973-2722-47a1-b5e6-d5753e4a33c0">
 
 ## 🛠️ 설치 및 실행
 
